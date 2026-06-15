@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Collection System Web - Criar Conta</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="container-auth" style="min-height: 100vh; padding: 20px 0;">
+        <div class="box-auth" style="max-width: 450px;">
+            <h1 class="titulo-auth">CRIAR <span>CONTA</span></h1>
+            
+            <!-- O formulário aponta para a função que agora reside no arquivo externo -->
+            <form id="form-cadastro" onsubmit="validarFormularioCadastro(event)">
+                <div class="grupo-input">
+                    <label>Nome Completo</label>
+                    <input type="text" id="cad-nome" placeholder="Digite seu nome completo">
+                    <span class="erro-campo" id="erro-nome">* O campo Nome Completo é obrigatório.</span>
+                </div>
+
+                <div class="grupo-input">
+                    <label>E-mail</label>
+                    <input type="text" id="cad-email" placeholder="Ex: exemplo@email.com">
+                    <span class="erro-campo" id="erro-email">* O campo E-mail é obrigatório.</span>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Usuário (Login)</label>
+                    <input type="text" id="cad-username" placeholder="Escolha um username">
+                    <span class="erro-campo" id="erro-username">* O campo Usuário é obrigatório.</span>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Senha</label>
+                    <input type="password" id="cad-senha" placeholder="Crie uma senha">
+                    <span class="erro-campo" id="erro-senha">* O campo Senha é obrigatório.</span>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Confirmar Senha</label>
+                    <input type="password" id="cad-confirmar-senha" placeholder="Repita a senha">
+                    <span class="erro-campo" id="erro-confirmar-senha">* A confirmação de senha é obrigatória.</span>
+                </div>
+
+                <div class="grupo-input">
+                    <label>Data de Nascimento</label>
+                    <input type="text" id="cad-data" maxlength="10" placeholder="DD/MM/AAAA" oninput="aplicarMascaraData(this)">
+                    <span class="erro-campo" id="erro-data">* A Data de Nascimento é obrigatória.</span>
+                </div>
+
+                <button type="submit" class="btn-form">CRIAR CONTA</button>
+            </form>
+
+            <a href="index.html" class="link-alternar">Já possui uma conta? <span>Faça Login</span></a>
+        </div>
+    </div>
+
+    <script src="./auth.js"></script>
+</body>
+</html>

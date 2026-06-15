@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Collection System Web - Painel</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="layout-dashboard">
+        <aside class="sidebar">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 30px;">
+                <div style="width: 80px; height: 80px; background-color: var(--cor-accent); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #000; font-size: 24px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">
+                    SYS
+                </div>
+                <div class="logo" style="margin-bottom: 0;">COLLECTION <span>SYS</span></div>
+            </div>
+            
+            <ul class="menu-nav">
+                <li class="ativo"><a href="./dashboard.html">Início</a></li>
+                <li><a href="./colecoes.html">Coleções</a></li>
+                <li><a href="#">Configurações</a></li>
+                <li><a href="./index.html" class="sair">SAIR</a></li>
+            </ul>
+        </aside>
+
+        <main class="conteudo-principal">
+            <div class="cabecalho-secao">
+                <h2>Bem-vindo, <span id="nome-perfil">Utilizador</span>!</h2>
+                <button class="btn-form" style="width: auto; padding: 10px 20px;" onclick="controlarModal('abrir')">Criar Nova Coleção</button>
+            </div>
+
+            <div class="cards-resumo">
+                <div class="card-resumo">
+                    <p>Total de Coleções</p>
+                    <h3>2</h3>
+                </div>
+                <div class="card-resumo">
+                    <p>Total de Jogos Catalogados</p>
+                    <h3>48</h3>
+                </div>
+                <div class="card-resumo">
+                    <p>Último Jogo Adicionado</p>
+                    <h3 style="font-size: 20px; margin-top: 10px; color: var(--cor-accent);">God of War</h3>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: var(--texto-claro);">Acesso Rápido (Últimas Coleções Acessadas)</h3>
+            
+            <div class="grid-colecoes">
+                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
+                    <h4>Jogos de PC</h4>
+                    <p>Visualizado recentemente</p>
+                </div>
+                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
+                    <h4>Clássicos do PlayStation</h4>
+                    <p>Visualizado recentemente</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modal-colecao">
+        <div class="conteudo-modal">
+            <button class="fechar-modal" onclick="controlarModal('fechar')">&times;</button>
+            <h3 style="margin-bottom: 25px;">Criar Nova Coleção</h3>
+            <form onsubmit="event.preventDefault(); alert('Coleção criada com sucesso!'); controlarModal('fechar');">
+                <div class="grupo-input">
+                    <label>Nome da Coleção</label>
+                    <input type="text" required placeholder="Ex: Favoritos do Nintendo Switch">
+                </div>
+                <button type="submit" class="btn-form">Salvar Coleção</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('nome-perfil').textContent = localStorage.getItem('usuarioLogado') || 'Desenvolvedor';
+
+        function controlarModal(acao) {
+            const modal = document.getElementById('modal-colecao');
+            if (acao === 'abrir') modal.classList.add('aberto');
+            else modal.classList.remove('aberto');
+        }
+    </script>
+</body>
+</html>

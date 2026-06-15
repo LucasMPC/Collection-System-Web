@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Collection System Web - Jogos</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="layout-dashboard">
+        <aside class="sidebar">
+            <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 30px;">
+                <div style="width: 80px; height: 80px; background-color: var(--cor-accent); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; color: #000; font-size: 24px; margin-bottom: 10px; box-shadow: 0 0 15px rgba(46, 204, 113, 0.4);">
+                    SYS
+                </div>
+                <div class="logo" style="margin-bottom: 0;">COLLECTION <span>SYS</span></div>
+            </div>
+            
+            <ul class="menu-nav">
+                <li><a href="./dashboard.html">Início</a></li>
+                <li class="ativo"><a href="./colecoes.html">Coleções</a></li>
+                <li><a href="#">Configurações</a></li>
+                <li><a href="./index.html" class="sair">SAIR</a></li>
+            </ul>
+        </aside>
+
+        <main class="conteudo-principal">
+            <div class="cabecalho-secao">
+                <div>
+                    <a href="./dashboard.html" style="color: var(--cor-accent); text-decoration: none; font-size: 14px;"><- Voltar ao painel</a>
+                    <h2 style="margin-top: 5px;">Jogos de PC</h2>
+                </div>
+                <button class="btn-form" style="width: auto; padding: 10px 20px;" onclick="controlarModalJogo('abrir')">Adicionar Jogo</button>
+            </div>
+
+            <div class="barra-pesquisa-container">
+                <input type="text" placeholder="Pesquisar por título do jogo..." oninput="filtrarTabela(this.value)">
+            </div>
+
+            <div class="container-tabela">
+                <table class="tabela-jogos" id="tabela-jogos-id">
+                    <thead>
+                        <tr>
+                            <th>Capa</th>
+                            <th>Nome do Jogo</th>
+                            <th>Data de Lançamento</th>
+                            <th>Tipo de Mídia</th>
+                            <th>Gênero</th>
+                            <th>Desenvolvedora</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><div class="capa-miniatura">Capa</div></td>
+                            <td style="font-weight: 600;" class="celula-titulo">God of War</td>
+                            <td>20/04/2018</td>
+                            <td>Digital</td>
+                            <td>Ação / Aventura</td>
+                            <td>Santa Monica Studio</td>
+                            <td>
+                                <button class="btn-acao btn-editar" onclick="alert('Modo edição ativado para God of War')">Editar</button>
+                                <button class="btn-acao btn-deletar" onclick="confirm('Deseja realmente excluir este título?')">Deletar</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><div class="capa-miniatura">Capa</div></td>
+                            <td style="font-weight: 600;" class="celula-titulo">Counter-Strike 2</td>
+                            <td>27/09/2023</td>
+                            <td>Digital</td>
+                            <td>Tiro (FPS)</td>
+                            <td>Valve</td>
+                            <td>
+                                <button class="btn-acao btn-editar" onclick="alert('Modo edição ativado para Counter-Strike 2')">Editar</button>
+                                <button class="btn-acao btn-deletar" onclick="confirm('Deseja realmente excluir este título?')">Deletar</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal" id="modal-jogo">
+        <div class="conteudo-modal">
+            <button class="fechar-modal" onclick="controlarModalJogo('fechar')">&times;</button>
+            <h3 style="margin-bottom: 25px;">Catalogar Novo Jogo</h3>
+            <form onsubmit="event.preventDefault(); alert('Jogo adicionado com sucesso!'); controlarModalJogo('fechar');">
+                <div class="grupo-input">
+                    <label>Título do Jogo</label>
+                    <input type="text" required>
+                </div>
+                <div class="grupo-input">
+                    <label>Data de Lançamento</label>
+                    <input type="text" maxlength="10" placeholder="DD/MM/AAAA" oninput="aplicarMascaraData(this)">
+                </div>
+                <div class="grupo-input">
+                    <label>Tipo de Mídia</label>
+                    <select>
+                        <option value="Digital">Digital</option>
+                        <option value="Física">Física</option>
+                    </select>
+                </div>
+                <div class="grupo-input">
+                    <label>Gênero</label>
+                    <input type="text" required placeholder="Ex: RPG, Estratégia">
+                </div>
+                <div class="grupo-input">
+                    <label>Desenvolvedora</label>
+                    <input type="text" required placeholder="Ex: Valve, Capcom">
+                </div>
+                <button type="submit" class="btn-form">Catalogar Título</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function controlarModalJogo(acao) {
+            const modal = document.getElementById('modal-jogo');
+            if (acao === 'abrir') modal.classList.add('aberto');
+            else modal.classList.remove('aberto');
+        }
+
+        function aplicarMascaraData(input) {
+            let valor = input.value.replace(/\D/g, "");
+            if (valor.length >= 3 && valor.length <= 4) {
+                valor = valor.replace(/^(\d{2})(\d+)/, "$1/$2");
+            } else if (valor.length >= 5) {
+                valor = valor.replace(/^(\d{2})(\d{2})(\d+)/, "$1/$2/$3");
+            }
+            input.value = valor;
+        }
+
+        // Algoritmo dinâmico de pesquisa na tabela (Filtro em tempo real)
+        function filtrarTabela(busca) {
+            const termo = busca.toLowerCase();
+            const linhas = document.querySelectorAll("#tabela-jogos-id tbody tr");
+            
+            linhas.forEach(linha => {
+                const titulo = linha.querySelector(".celula-titulo").textContent.toLowerCase();
+                if (titulo.includes(termo)) {
+                    linha.style.display = "";
+                } else {
+                    linha.style.display = "none";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

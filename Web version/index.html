@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Collection System Web - Login</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <div class="container-auth">
+        <div class="box-auth">
+            <h1 class="titulo-auth">COLLECTION <span>SYSTEM</span></h1>
+            
+            <form id="form-login" onsubmit="executarLogin(event)">
+                <div class="grupo-input">
+                    <label>Nome de Utilizador</label>
+                    <input type="text" id="login-username" placeholder="Digite seu username">
+                </div>
+                <div class="grupo-input">
+                    <label>Senha</label>
+                    <input type="password" id="login-senha" placeholder="Digite sua senha">
+                </div>
+                <button type="submit" class="btn-form">ENTRAR</button>
+            </form>
+
+            <a href="cadastro-usuario.html" class="link-alternar">Não possui uma conta? <span>Cadastre-se</span></a>
+            <div class="msg-erro" id="erro-auth"></div>
+        </div>
+    </div>
+
+    <script src="./auth.js"></script>
+</body>
+</html>
