@@ -33,30 +33,28 @@
             <div class="cards-resumo">
                 <div class="card-resumo">
                     <p>Total de Coleções</p>
-                    <h3>2</h3>
+                    <h3 id="total-colecoes">--</h3>
                 </div>
+
                 <div class="card-resumo">
                     <p>Total de Jogos Catalogados</p>
-                    <h3>48</h3>
+                    <h3 id="total-jogos">--</h3>
                 </div>
+
                 <div class="card-resumo">
                     <p>Último Jogo Adicionado</p>
-                    <h3 style="font-size: 20px; margin-top: 10px; color: var(--cor-accent);">God of War</h3>
+                    <h3 id="ultimo-jogo"
+                        style="font-size: 20px; margin-top: 10px; color: var(--cor-accent);">
+                        --
+                    </h3>
                 </div>
             </div>
 
             <h3 style="margin-bottom: 20px; color: var(--texto-claro);">Acesso Rápido (Últimas Coleções Acessadas)</h3>
             
-            <div class="grid-colecoes">
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>Jogos de PC</h4>
-                    <p>Visualizado recentemente</p>
-                </div>
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>Clássicos do PlayStation</h4>
-                    <p>Visualizado recentemente</p>
-                </div>
+            <div class="grid-colecoes" id="lista-colecoes-dashboard">
             </div>
+
         </main>
     </div>
 
@@ -64,10 +62,14 @@
         <div class="conteudo-modal">
             <button class="fechar-modal" onclick="controlarModal('fechar')">&times;</button>
             <h3 style="margin-bottom: 25px;">Criar Nova Coleção</h3>
-            <form onsubmit="event.preventDefault(); alert('Coleção criada com sucesso!'); controlarModal('fechar');">
+            <form id="form-colecao" onsubmit="salvarColecao(event)">
                 <div class="grupo-input">
                     <label>Nome da Coleção</label>
-                    <input type="text" required placeholder="Ex: Favoritos do Nintendo Switch">
+                    <input
+                        type="text"
+                        id="nome-colecao"
+                        required
+                        placeholder="Ex: Favoritos do Nintendo Switch">
                 </div>
                 <button type="submit" class="btn-form">Salvar Coleção</button>
             </form>
@@ -75,13 +77,181 @@
     </div>
 
     <script>
-        document.getElementById('nome-perfil').textContent = localStorage.getItem('usuarioLogado') || 'Desenvolvedor';
+
+        
+
+        const nomeUsuario = localStorage.getItem('usuarioLogado');
+
+        if (!nomeUsuario) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('nome-perfil').textContent = nomeUsuario;
+
+        const usuarioId = localStorage.getItem('usuarioId');
 
         function controlarModal(acao) {
             const modal = document.getElementById('modal-colecao');
             if (acao === 'abrir') modal.classList.add('aberto');
             else modal.classList.remove('aberto');
         }
+
+        async function salvarColecao(event) {
+
+            event.preventDefault();
+
+            const nome = document.getElementById('nome-colecao').value.trim();
+            const usuarioId = localStorage.getItem('usuarioId');
+
+            if (!nome) {
+                alert('Informe o nome da coleção.');
+                return;
+            }
+
+            const payload = {
+                nome: nome,
+                icone: 'default'
+            };
+
+            try {
+
+                const resposta = await fetch(
+                    `http://localhost:8080/api/colecoes/usuario/${usuarioId}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                const dados = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(dados.erro || 'Erro ao criar coleção.');
+                    return;
+                }
+
+                document.getElementById('form-colecao').reset();
+
+                controlarModal('fechar');
+
+                alert('Coleção criada com sucesso!');
+
+                // Atualiza a lista sem recarregar a página
+                location.reload();
+
+            } catch (erro) {
+                console.error(erro);
+                alert('Erro ao conectar ao servidor.');
+            }
+        }
+
+        carregarColecoesRecentes();
+
+        function carregarColecoesRecentes() {
+
+            const container = document.getElementById(
+                'lista-colecoes-dashboard'
+            );
+
+            const historico = JSON.parse(
+                localStorage.getItem('colecoesRecentes')
+            ) || [];
+
+            container.innerHTML = '';
+
+            if (historico.length === 0) {
+
+                container.innerHTML = `
+                    <p style="color: var(--texto-mutado);">
+                        Nenhuma coleção acessada recentemente.
+                    </p>
+                `;
+
+                return;
+            }
+
+            historico.forEach(colecao => {
+
+                const card = document.createElement('div');
+
+                card.className = 'card-colecao';
+
+                card.innerHTML = `
+                    <h4>${colecao.nome}</h4>
+                    <p>Clique para abrir</p>
+                `;
+
+                card.onclick = () => {
+
+                    localStorage.setItem(
+                        'colecaoSelecionada',
+                        colecao.id
+                    );
+
+                    window.location.href =
+                        './colecao-detalhes.html';
+                };
+
+                container.appendChild(card);
+            });
+        }
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            carregarDashboard();
+        });
+
+        async function carregarDashboard() {
+            const usuarioId = localStorage.getItem('usuarioId');
+
+            if (!usuarioId) return;
+
+            try {
+                await Promise.all([
+                    carregarTotalColecoes(usuarioId),
+                    carregarTotalJogos(usuarioId),
+                    carregarUltimoJogo(usuarioId)
+                ]);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        async function carregarTotalColecoes(usuarioId) {
+            const res = await fetch(
+                `http://localhost:8080/api/colecoes/total/usuario/${usuarioId}`
+            );
+
+            const data = await res.json();
+
+            document.getElementById("total-colecoes").textContent =
+                data.total ?? 0;
+        }
+
+        async function carregarTotalJogos(usuarioId) {
+            const res = await fetch(
+                `http://localhost:8080/api/jogos/total/usuario/${usuarioId}`
+            );
+
+            const data = await res.json();
+
+            document.getElementById("total-jogos").textContent =
+                data.total ?? 0;
+        }
+        
+        async function carregarUltimoJogo(usuarioId) {
+            const res = await fetch(
+                `http://localhost:8080/api/jogos/ultimo/usuario/${usuarioId}`
+            );
+
+            const jogo = await res.json();
+
+            document.getElementById("ultimo-jogo").textContent =
+                jogo?.nome ?? "Nenhum jogo";
+        }
+
     </script>
 </body>
 </html>

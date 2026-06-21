@@ -33,24 +33,13 @@
                 <button class="btn-form" style="width: auto; padding: 10px 20px;" onclick="controlarModal('abrir')">Nova Coleção</button>
             </div>
 
-            <div class="grid-colecoes">
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>Jogos de PC</h4>
-                    <p>20 jogos salvos</p>
-                </div>
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>Clássicos do PlayStation</h4>
-                    <p>28 jogos salvos</p>
-                </div>
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>RPG / Estratégia</h4>
-                    <p>12 jogos salvos</p>
-                </div>
-                <div class="card-colecao" onclick="window.location.href='./colecao-detalhes.html'">
-                    <h4>Favoritos do Nintendo Switch</h4>
-                    <p>5 jogos salvos</p>
-                </div>
+            <div class="grid-colecoes" id="lista-colecoes">
             </div>
+
+            <p id="mensagem-vazia"
+                style="display: none; color: var(--texto-mutado); margin-top: 20px;">
+                Nenhuma coleção cadastrada.
+            </p>
         </main>
     </div>
 
@@ -58,10 +47,14 @@
         <div class="conteudo-modal">
             <button class="fechar-modal" onclick="controlarModal('fechar')">&times;</button>
             <h3 style="margin-bottom: 25px;">Criar Nova Coleção</h3>
-            <form onsubmit="event.preventDefault(); alert('Coleção criada com sucesso!'); controlarModal('fechar');">
+            <form id="form-colecao">
                 <div class="grupo-input">
                     <label>Nome da Coleção</label>
-                    <input type="text" required placeholder="Ex: Coleção Retro Xbox">
+                    <input
+                        type="text"
+                        id="nome-colecao"
+                        required
+                        placeholder="Ex: Coleção Retro Xbox">
                 </div>
                 <button type="submit" class="btn-form">Salvar Coleção</button>
             </form>
@@ -69,10 +62,131 @@
     </div>
 
     <script>
+        const usuarioId = localStorage.getItem('usuarioId');
+
+        if (!usuarioId) {
+            window.location.href = 'index.html';
+        }
+
+        const listaColecoes = document.getElementById('lista-colecoes');
+        const mensagemVazia = document.getElementById('mensagem-vazia');
+
+        carregarColecoes();
+
+        async function carregarColecoes() {
+            try {
+                const resposta = await fetch(
+                    `http://localhost:8080/api/colecoes/usuario/${usuarioId}`
+                );
+
+                const colecoes = await resposta.json();
+
+                listaColecoes.innerHTML = '';
+
+                if (colecoes.length === 0) {
+                    mensagemVazia.style.display = 'block';
+                    return;
+                }
+
+                mensagemVazia.style.display = 'none';
+
+                colecoes.forEach(colecao => {
+                    const card = document.createElement('div');
+
+                    card.className = 'card-colecao';
+
+                    card.innerHTML = `
+                        <h4>${colecao.nome}</h4>
+                        <p>Clique para visualizar</p>
+                    `;
+
+                    card.onclick = () => {
+
+                        localStorage.setItem(
+                            'colecaoSelecionada',
+                            colecao.id
+                        );
+
+                        let historico = JSON.parse(
+                            localStorage.getItem('colecoesRecentes')
+                        ) || [];
+
+                        historico = historico.filter(
+                            item => item.id !== colecao.id
+                        );
+
+                        historico.unshift({
+                            id: colecao.id,
+                            nome: colecao.nome
+                        });
+
+                        historico = historico.slice(0, 2);
+
+                        localStorage.setItem(
+                            'colecoesRecentes',
+                            JSON.stringify(historico)
+                        );
+
+                        window.location.href = './colecao-detalhes.html';
+                    };
+
+                    listaColecoes.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao carregar coleções.');
+            }
+        }
+
+        document.getElementById('form-colecao')
+            .addEventListener('submit', async function(event) {
+
+            event.preventDefault();
+
+            const nome = document.getElementById('nome-colecao').value;
+
+            try {
+                const resposta = await fetch(
+                    `http://localhost:8080/api/colecoes/usuario/${usuarioId}`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            nome: nome
+                        })
+                    }
+                );
+
+                const dados = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(dados.erro || 'Erro ao criar coleção.');
+                    return;
+                }
+
+                document.getElementById('form-colecao').reset();
+
+                controlarModal('fechar');
+
+                carregarColecoes();
+
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao conectar com o servidor.');
+            }
+        });
+
         function controlarModal(acao) {
             const modal = document.getElementById('modal-colecao');
-            if (acao === 'abrir') modal.classList.add('aberto');
-            else modal.classList.remove('aberto');
+
+            if (acao === 'abrir') {
+                modal.classList.add('aberto');
+            } else {
+                modal.classList.remove('aberto');
+            }
         }
     </script>
 </body>

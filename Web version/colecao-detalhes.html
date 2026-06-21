@@ -28,9 +28,14 @@
             <div class="cabecalho-secao">
                 <div>
                     <a href="./dashboard.html" style="color: var(--cor-accent); text-decoration: none; font-size: 14px;"><- Voltar ao painel</a>
-                    <h2 style="margin-top: 5px;">Jogos de PC</h2>
+                    <h2 id="nome-colecao" style="margin-top: 5px;">Carregando...</h2>
                 </div>
-                <button class="btn-form" style="width: auto; padding: 10px 20px;" onclick="controlarModalJogo('abrir')">Adicionar Jogo</button>
+                <button
+                    class="btn-form"
+                    style="width: auto; padding: 10px 20px;"
+                    onclick="controlarModalJogo('abrir')">
+                    Adicionar Jogo
+                </button>
             </div>
 
             <div class="barra-pesquisa-container">
@@ -50,33 +55,13 @@
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td><div class="capa-miniatura">Capa</div></td>
-                            <td style="font-weight: 600;" class="celula-titulo">God of War</td>
-                            <td>20/04/2018</td>
-                            <td>Digital</td>
-                            <td>Ação / Aventura</td>
-                            <td>Santa Monica Studio</td>
-                            <td>
-                                <button class="btn-acao btn-editar" onclick="alert('Modo edição ativado para God of War')">Editar</button>
-                                <button class="btn-acao btn-deletar" onclick="confirm('Deseja realmente excluir este título?')">Deletar</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><div class="capa-miniatura">Capa</div></td>
-                            <td style="font-weight: 600;" class="celula-titulo">Counter-Strike 2</td>
-                            <td>27/09/2023</td>
-                            <td>Digital</td>
-                            <td>Tiro (FPS)</td>
-                            <td>Valve</td>
-                            <td>
-                                <button class="btn-acao btn-editar" onclick="alert('Modo edição ativado para Counter-Strike 2')">Editar</button>
-                                <button class="btn-acao btn-deletar" onclick="confirm('Deseja realmente excluir este título?')">Deletar</button>
-                            </td>
-                        </tr>
+                    <tbody id="lista-jogos">
                     </tbody>
                 </table>
+                <p id="mensagem-sem-jogos"
+                    style="display: none; color: var(--texto-mutado); margin-top: 20px;">
+                    Nenhum jogo cadastrado nesta coleção.
+                </p>
             </div>
         </main>
     </div>
@@ -85,29 +70,41 @@
         <div class="conteudo-modal">
             <button class="fechar-modal" onclick="controlarModalJogo('fechar')">&times;</button>
             <h3 style="margin-bottom: 25px;">Catalogar Novo Jogo</h3>
-            <form onsubmit="event.preventDefault(); alert('Jogo adicionado com sucesso!'); controlarModalJogo('fechar');">
+            <form id="form-jogo" onsubmit="salvarJogo(event)">
                 <div class="grupo-input">
                     <label>Título do Jogo</label>
-                    <input type="text" required>
+                    <input type="text" id="jogo-nome" required>
                 </div>
                 <div class="grupo-input">
                     <label>Data de Lançamento</label>
-                    <input type="text" maxlength="10" placeholder="DD/MM/AAAA" oninput="aplicarMascaraData(this)">
+                    <input type="text"
+                        id="jogo-data"
+                        maxlength="10"
+                        placeholder="DD/MM/AAAA"
+                        oninput="aplicarMascaraData(this)">
                 </div>
                 <div class="grupo-input">
                     <label>Tipo de Mídia</label>
-                    <select>
+                    <select id="jogo-midia">
                         <option value="Digital">Digital</option>
                         <option value="Física">Física</option>
                     </select>
                 </div>
                 <div class="grupo-input">
                     <label>Gênero</label>
-                    <input type="text" required placeholder="Ex: RPG, Estratégia">
+                    <input
+                        type="text"
+                        id="jogo-genero"
+                        required
+                        placeholder="Ex: RPG, Estratégia">
                 </div>
                 <div class="grupo-input">
                     <label>Desenvolvedora</label>
-                    <input type="text" required placeholder="Ex: Valve, Capcom">
+                    <input
+                        type="text"
+                        id="jogo-desenvolvedora"
+                        required
+                        placeholder="Ex: Valve, Capcom">
                 </div>
                 <button type="submit" class="btn-form">Catalogar Título</button>
             </form>
@@ -115,10 +112,30 @@
     </div>
 
     <script>
+        const usuarioId = localStorage.getItem('usuarioId');
+        let jogoEditandoId = null;
+        if (!usuarioId) {
+            window.location.href = 'index.html';
+        }
+
         function controlarModalJogo(acao) {
             const modal = document.getElementById('modal-jogo');
-            if (acao === 'abrir') modal.classList.add('aberto');
-            else modal.classList.remove('aberto');
+            if (acao === 'abrir') {
+                modal.classList.add('aberto');
+            } else {
+                modal.classList.remove('aberto');
+                jogoEditandoId = null;
+                document.getElementById('form-jogo').reset();
+            }
+        }
+
+        function abrirModalJogo() {
+            const idColecao = localStorage.getItem('colecaoSelecionada');
+            if (!idColecao) {
+                alert('Nenhuma coleção selecionada.');
+                return;
+            }
+            controlarModalJogo('abrir');
         }
 
         function aplicarMascaraData(input) {
@@ -144,6 +161,187 @@
                     linha.style.display = "none";
                 }
             });
+        }
+
+        const idColecao = localStorage.getItem('colecaoSelecionada');
+
+        if (!idColecao) {
+            window.location.href = 'colecoes.html';
+        }
+
+        carregarJogos();
+
+        async function carregarJogos() {
+
+            const tabela = document.getElementById('lista-jogos');
+            const mensagem = document.getElementById('mensagem-sem-jogos');
+
+            try {
+                const resposta = await fetch(
+                    `http://localhost:8080/api/jogos/colecao/${idColecao}`
+                );
+
+                const jogos = await resposta.json();
+
+                tabela.innerHTML = '';
+
+                if (jogos.length === 0) {
+                    mensagem.style.display = 'block';
+                    return;
+                }
+
+                mensagem.style.display = 'none';
+
+                jogos.forEach(jogo => {
+
+                    tabela.innerHTML += `
+                        <tr>
+                            <td><div class="capa-miniatura">Capa</div></td>
+                            <td class="celula-titulo">${jogo.nome}</td>
+                            <td>${jogo.dataLancamento || '-'}</td>
+                            <td>${jogo.tipoMidia || '-'}</td>
+                            <td>${jogo.genero || '-'}</td>
+                            <td>${jogo.desenvolvedora?.nome || '-'}</td>
+                            <td>
+                                <button
+                                    class="btn-acao btn-editar"
+                                    onclick="editarJogo(${jogo.id})">
+                                    Editar
+                                </button>
+
+                                <button
+                                    class="btn-acao btn-deletar"
+                                    onclick="excluirJogo(${jogo.id})">
+                                    Deletar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+            } catch (erro) {
+                console.error(erro);
+                alert('Erro ao carregar jogos.');
+            }
+        }
+
+        async function salvarJogo(event) {
+
+            event.preventDefault();
+
+            const payload = {
+                nome: document.getElementById('jogo-nome').value,
+                dataLancamento: document.getElementById('jogo-data').value,
+                genero: document.getElementById('jogo-genero').value,
+                tipoMidia: document.getElementById('jogo-midia').value,
+                idColecao: Number(idColecao)
+            };
+
+            if (jogoEditandoId) {
+                payload.id = jogoEditandoId;
+            }
+
+            try {
+
+                const url = jogoEditandoId
+                    ? `http://localhost:8080/api/jogos/${jogoEditandoId}`
+                    : 'http://localhost:8080/api/jogos';
+
+                const metodo = jogoEditandoId ? 'PUT' : 'POST';
+
+                const resposta = await fetch(
+                    url,
+                    {
+                        method: metodo,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    }
+                );
+
+                const dados = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(dados.erro || 'Erro ao cadastrar jogo.');
+                    return;
+                }
+
+                document.getElementById('form-jogo').reset();
+
+                jogoEditandoId = null;
+
+                controlarModalJogo('fechar');
+
+                carregarJogos();
+
+            } catch (erro) {
+                console.error(erro);
+                alert('Erro ao conectar ao servidor.');
+            }
+        }
+
+        async function excluirJogo(id) {
+
+            const confirmar = confirm(
+                'Deseja realmente excluir este jogo?'
+            );
+
+            if (!confirmar) {
+                return;
+            }
+
+            try {
+
+                const resposta = await fetch(
+                    `http://localhost:8080/api/jogos/${id}`,
+                    {
+                        method: 'DELETE'
+                    }
+                );
+
+                const dados = await resposta.json();
+
+                if (!resposta.ok) {
+                    alert(dados.erro || 'Erro ao excluir jogo.');
+                    return;
+                }
+
+                alert(dados.mensagem);
+
+                carregarJogos();
+
+            } catch (erro) {
+
+                console.error(erro);
+
+                alert('Erro ao conectar ao servidor.');
+            }
+        }
+
+        async function editarJogo(id) {
+
+            const linhas = await fetch(
+                `http://localhost:8080/api/jogos/colecao/${idColecao}`
+            );
+
+            const jogos = await linhas.json();
+
+            const jogo = jogos.find(j => j.id === id);
+
+            if (!jogo) {
+                alert('Jogo não encontrado.');
+                return;
+            }
+
+            jogoEditandoId = id;
+
+            document.getElementById('jogo-nome').value = jogo.nome || '';
+            document.getElementById('jogo-data').value = jogo.dataLancamento || '';
+            document.getElementById('jogo-genero').value = jogo.genero || '';
+            document.getElementById('jogo-midia').value = jogo.tipoMidia || 'Digital';
+
+            controlarModalJogo('abrir');
         }
     </script>
 </body>
