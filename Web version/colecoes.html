@@ -108,7 +108,7 @@
                         );
 
                         let historico = JSON.parse(
-                            localStorage.getItem('colecoesRecentes')
+                            localStorage.getItem(`colecoesRecentes_${usuarioId}`)
                         ) || [];
 
                         historico = historico.filter(
@@ -123,7 +123,7 @@
                         historico = historico.slice(0, 2);
 
                         localStorage.setItem(
-                            'colecoesRecentes',
+                            `colecoesRecentes_${usuarioId}`,
                             JSON.stringify(historico)
                         );
 

@@ -23,8 +23,13 @@ public class JogoDAO {
             ps.setString(5, jogo.getTipoMidia());
             ps.setInt(6, jogo.getIdColecao());
             
+            Integer devId = null;
             if (jogo.getDesenvolvedora() != null) {
-                ps.setInt(7, jogo.getDesenvolvedora().getId());
+                devId = obterOuCriarDesenvolvedora(conn, jogo.getDesenvolvedora().getNome());
+            }
+
+            if (devId != null) {
+                ps.setInt(7, devId);
             } else {
                 ps.setNull(7, Types.INTEGER);
             }
@@ -55,9 +60,15 @@ public class JogoDAO {
                     j.setTipoMidia(rs.getString("tipo_midia"));
                     j.setIdColecao(rs.getInt("id_colecao"));
                     
-                    int devId = rs.getInt("id_desenvolvedora");
-                    if (!rs.wasNull()) {
-                        j.setDesenvolvedora(new Desenvolvedora(devId, rs.getString("dev_nome")));
+                    Integer devId = (Integer) rs.getObject("id_desenvolvedora");
+                    String devNome = rs.getString("dev_nome");
+
+                    if (devId != null && devNome != null) {
+                        j.setDesenvolvedora(new Desenvolvedora(devId, devNome));
+                    } else if (devId != null) {
+                        j.setDesenvolvedora(new Desenvolvedora(devId, "Desconhecida"));
+                    } else {
+                        j.setDesenvolvedora(null);
                     }
                     lista.add(j);
                 }
@@ -85,21 +96,38 @@ public class JogoDAO {
             SET nome = ?,
                 data_lancamento = ?,
                 genero = ?,
-                tipo_midia = ?
+                tipo_midia = ?,
+                id_desenvolvedora = ?
             WHERE id = ?
         """;
 
         try (Connection conn = ConnectionFactory.getConexao();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+           PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setString(1, jogo.getNome());
-            ps.setString(2, jogo.getDataLancamento());
-            ps.setString(3, jogo.getGenero());
-            ps.setString(4, jogo.getTipoMidia());
-            ps.setInt(5, jogo.getId());
+           ps.setString(1, jogo.getNome());
+           ps.setString(2, jogo.getDataLancamento());
+           ps.setString(3, jogo.getGenero());
+           ps.setString(4, jogo.getTipoMidia());
 
-            ps.executeUpdate();
-        }
+           Integer devId = null;
+
+           if (jogo.getDesenvolvedora() != null) {
+               devId = obterOuCriarDesenvolvedora(
+                   conn,
+                   jogo.getDesenvolvedora().getNome()
+               );
+           }
+
+           if (devId != null) {
+               ps.setInt(5, devId);
+           } else {
+               ps.setNull(5, Types.INTEGER);
+           }
+
+           ps.setInt(6, jogo.getId());
+
+           ps.executeUpdate();
+       }
     }
 
     public void excluir(int id) throws SQLException {
@@ -138,6 +166,31 @@ public class JogoDAO {
                     j.setNome(rs.getString("nome"));
                     return j;
                 }
+            }
+        }
+
+        return null;
+    }
+    
+    private Integer obterOuCriarDesenvolvedora(Connection conn, String nome) throws SQLException {
+        String select = "SELECT id FROM desenvolvedora WHERE nome = ?";
+        try (PreparedStatement ps = conn.prepareStatement(select)) {
+            ps.setString(1, nome);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        }
+
+        String insert = "INSERT INTO desenvolvedora (nome) VALUES (?)";
+        try (PreparedStatement ps = conn.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, nome);
+            ps.executeUpdate();
+
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                return rs.getInt(1);
             }
         }
 

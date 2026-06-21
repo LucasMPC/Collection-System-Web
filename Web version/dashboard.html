@@ -157,7 +157,7 @@
             );
 
             const historico = JSON.parse(
-                localStorage.getItem('colecoesRecentes')
+                localStorage.getItem(`colecoesRecentes_${usuarioId}`)
             ) || [];
 
             container.innerHTML = '';
